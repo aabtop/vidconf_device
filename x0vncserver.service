@@ -1,0 +1,11 @@
+[Unit]
+Description=Remote desktop service (VNC)
+
+[Service]
+Type=simple
+# wait for Xorg started by ${USER}
+ExecStartPre=/bin/sh -c 'while ! pgrep -U "$USER" Xorg; do sleep 2; done'
+ExecStart=/usr/bin/x0vncserver -PasswordFile /vidconf/tigervnc/vnc_passwd
+
+[Install]
+WantedBy=default.target

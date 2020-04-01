@@ -1,0 +1,178 @@
+---
+  # This will setup a device for video conferencing.
+  
+  - hosts: all
+    gather_facts: False
+    vars:
+      - guacamole_download_url: http://archive.apache.org/dist/guacamole/1.1.0/binary/guacamole-1.1.0.war
+      - guacamole_client_download_directory: /vidconf/guacamole
+      - vnc_configuration_directory: /vidconf/tigervnc
+      - desktop_user: nano
+
+    handlers:
+      - name: restart tomcat8
+        service:
+          name: tomcat8
+          state: restarted
+        become: yes
+        listen: "restart guacamole"
+      - name: restart guacd
+        service:
+          name: guacd
+          state: restarted
+        become: yes
+        listen: "restart guacamole"
+    
+    tasks:
+    - name: "Set default runlevel to 5 (i.e. full X Windows on startup)"
+      shell: |
+        if systemctl get-default | grep -vqL graphical.target
+        then
+          systemctl isolate graphical.target
+          systemctl set-default graphical.target
+          echo changed
+        fi
+      register: set_runlevel
+      changed_when: "'changed' in set_runlevel.stdout"
+      become: yes
+    # Since we'll be using the device as a server, we'd like to keep the
+    # wireless adapter ready at all times.
+    - name: Disable wifi power management.
+      lineinfile:
+        path: /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
+        regexp: '^\s*wifi.powersave\s*='
+        line: 'wifi.powersave = 2'
+      become: yes
+    - name: Disable USB power management.
+      lineinfile:
+        path: /boot/extlinux/extlinux.conf
+        regexp: '^\s*usbcore.autosuspend\s*='
+        line: 'usbcore.autosuspend=-1'
+      become: yes
+    # Make sure the devices stays active and doesn't lock anyone out.
+    - name: Disable screen saver and screen lock.
+      shell: |
+        echo `gsettings get org.gnome.desktop.session idle-delay`
+        gsettings set org.gnome.desktop.session idle-delay 0
+        echo `gsettings get org.gnome.desktop.screensaver lock-enabled`
+        gsettings set org.gnome.desktop.screensaver lock-enabled false
+      register: disable_screen_lock
+      changed_when: "'uint32 0' not in disable_screen_lock.stdout or 'false' not in disable_screen_lock.stdout"
+    # Install ufw so that we can easily configure the firewall.
+    - name: Install ufw.
+      apt:
+        pkg:
+          - ufw
+      become: yes
+    # Without disabling IPV6, we get errors in the subsequent UFW commands :(.
+    - name: Disable IPV6 in ufw configuration.
+      lineinfile:
+        path: /etc/default/ufw
+        regexp: '^\s*IPV6\s*='
+        line: 'IPV6=no'
+      become: yes
+    - name: Allow SSH in ufw.
+      ufw:
+        rule: allow
+        port: 22
+        proto: tcp
+      become: yes
+    - name: Enable ufw and set policy to reject.
+      ufw:
+        policy: reject
+        state: enabled
+      become: yes
+    # Setup the VNC server.
+    - name: Install TigerVNC server.
+      apt:
+        pkg:
+          - tigervnc-standalone-server
+          - tigervnc-common
+          - tigervnc-xorg-extension
+      become: yes
+    - name: Ensure VNC configuration directory exists.    
+      file:
+        state: directory
+        path: "{{vnc_configuration_directory}}"
+      become: yes
+    - name: Configure VNC server with passwd file.
+      copy:
+        src: vnc_passwd
+        dest: {{vnc_configuration_directory}}/vnc_passwd
+      become: yes
+    - name: Install VNC service file so it can start on boot.
+      copy:
+        src: x0vncserver.service
+        dest: /home/{{desktop_user}}/.config/systemd/user/x0vncserver.service
+    - name: "Register vncserver to start on boot."
+      shell: sudo update-rc.d vncserver defaults
+      become: yes
+    # Setup an RDP server.
+    - name: Install RDP server.
+      apt:
+        pkg:
+          - xrdp
+    - name: Configure Xrdp.
+      copy:
+        src: xrdp.ini
+        dest: /etc/xrdp/xrdp.ini
+      become: yes
+    # We'll use Apache Guacamole for remote desktop support because it enables
+    # clients to connect via browser.
+    - name: Install Apache Guacamole for remote desktop support.
+      apt:
+        pkg:
+          - guacamole-tomcat
+          - libguac-client-rdp0
+      become: yes
+    - name: Ensure Guacamole download directory exists.
+      file:
+        state: directory
+        path: "{{guacamole_client_download_directory}}"
+      become: yes
+    - name: Download the Apache Guacamole client.
+      get_url:
+        url: "{{guacamole_download_url}}"
+        dest: "{{guacamole_client_download_directory}}"
+      retries: 3
+      register: guacamole_client_download
+      become: yes
+
+    - name: Install the Apache Guacamole client application.
+      file:
+        state: link
+        src: "{{guacamole_client_download.dest}}"
+        dest: /var/lib/tomcat8/webapps/guacamole.war
+      notify: "restart guacamole"
+      become: yes
+    
+    - name: Ensure Tomcat Guacamole configuration directory exists.
+      file:
+        state: directory
+        path: /usr/share/tomcat8/.guacamole
+      become: yes
+    - name: Install the default Apache Guacamole configuration properties.
+      file:
+        state: link
+        src: /etc/guacamole/guacamole.properties
+        dest: /usr/share/tomcat8/.guacamole/guacamole.properties
+      notify: "restart guacamole"
+      become: yes
+    - name: Setup /etc/guacamole/tomcat.xml.
+      copy:
+        src: tomcat.xml
+        dest: /etc/guacamole/tomcat.xml
+      notify: "restart guacamole"
+      become: yes
+    - name: Setup /etc/guacamole/user-mapping.xml.
+      copy:
+        src: user-mapping.xml
+        dest: /etc/guacamole/user-mapping.xml
+      notify: "restart guacamole"
+      become: yes
+    - name: Allow Tomcat HTTP in ufw.
+      ufw:
+        rule: allow
+        port: 8080
+        proto: tcp
+      become: yes
