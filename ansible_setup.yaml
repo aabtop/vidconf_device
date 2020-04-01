@@ -6,7 +6,7 @@
     vars:
       - guacamole_download_url: http://archive.apache.org/dist/guacamole/1.1.0/binary/guacamole-1.1.0.war
       - guacamole_client_download_directory: /vidconf/guacamole
-      - vnc_configuration_directory: /vidconf/tigervnc
+      - vnc_configuration_directory: /vidconf/vnc
       - desktop_user: nano
 
     handlers:
@@ -83,12 +83,11 @@
         state: enabled
       become: yes
     # Setup the VNC server.
-    - name: Install TigerVNC server.
+    - name: Install x11vnc server.
       apt:
         pkg:
-          - tigervnc-standalone-server
-          - tigervnc-common
-          - tigervnc-xorg-extension
+          - x11vnc
+          - net-tools
       become: yes
     - name: Ensure VNC configuration directory exists.    
       file:
@@ -98,16 +97,24 @@
     - name: Configure VNC server with passwd file.
       copy:
         src: vnc_passwd
-        dest: {{vnc_configuration_directory}}/vnc_passwd
+        dest: "{{vnc_configuration_directory}}/passwd"
       become: yes
     - name: Install VNC service file so it can start on boot.
       copy:
-        src: x0vncserver.service
-        dest: /home/{{desktop_user}}/.config/systemd/user/x0vncserver.service
-    - name: "Register vncserver to start on boot."
-      shell: sudo update-rc.d vncserver defaults
+        src: x11vnc.service
+        dest: /lib/systemd/system/x11vnc.service
+      register: install_vnc_service
       become: yes
-    # Setup an RDP server.
+    - name: "Enable x11vnc.service to launch x11vnc on startup."
+      service:
+        name: x11vnc
+        state: started
+        daemon_reload: yes
+        enabled: yes
+      when: install_vnc_service.changed
+      become: yes
+    # Setup an RDP server
+    # (not strictly necessary, but it offers an extra option to VNC).
     - name: Install RDP server.
       apt:
         pkg:

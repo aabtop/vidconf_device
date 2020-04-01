@@ -1,0 +1,14 @@
+[Unit]
+Description=Start x11vnc at startup.
+After=multi-user.target
+
+[Service]
+User=nano
+Type=simple
+ExecStart=/usr/bin/x11vnc -auth /home/nano/.Xauthority -forever -loop20000 -repeat -rfbauth /vidconf/vnc/passwd -rfbport 5900 -shared
+ExecStop=/usr/bin/killall x11vnc
+Restart=on-failure
+Restart-sec=10
+
+[Install]
+WantedBy=multi-user.target
