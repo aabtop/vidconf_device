@@ -22,7 +22,13 @@
           state: restarted
         become: yes
         listen: "restart guacamole"
-    
+      - name: restart nginx
+        service:
+          name: nginx
+          state: restarted
+          enabled: yes
+        become: yes
+
     tasks:
     - name: "Set default runlevel to 5 (i.e. full X Windows on startup)"
       shell: |
@@ -141,10 +147,8 @@
       get_url:
         url: "{{guacamole_download_url}}"
         dest: "{{guacamole_client_download_directory}}"
-      retries: 3
       register: guacamole_client_download
       become: yes
-
     - name: Install the Apache Guacamole client application.
       file:
         state: link
@@ -177,9 +181,39 @@
         dest: /etc/guacamole/user-mapping.xml
       notify: "restart guacamole"
       become: yes
-    - name: Allow Tomcat HTTP in ufw.
+    - name: Remove "apache2" package
+      apt:
+        name: apache2
+        state: absent
+      become: yes
+    # Setup NGINX as a reverse proxy for the Tomcat Guacamole web server.
+    - name: Install NGINX.
+      apt:
+        pkg:
+          - nginx
+    - name: Disable default NGINX site.
+      file:
+        state: absent
+        path: /etc/nginx/sites-enabled/default
+      become: yes
+    - name: Install Guacamole reverse proxy NGINX site.
+      copy:
+        src: nginx_sites_guacamole
+        dest: /etc/nginx/sites-available/guacamole
+      become: yes
+      notify: "restart nginx"
+    - name: Activate NGINX Guacamole site.
+      file:
+        state: link
+        src: /etc/nginx/sites-available/guacamole
+        dest: /etc/nginx/sites-enabled/guacamole
+      become: yes
+      notify: "restart nginx"
+
+    # Open up the web port to enable access to the system.
+    - name: Allow nginx HTTPs port in ufw.
       ufw:
         rule: allow
-        port: 8080
+        port: 443
         proto: tcp
       become: yes
