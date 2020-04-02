@@ -7,6 +7,7 @@
       - guacamole_download_url: http://archive.apache.org/dist/guacamole/1.1.0/binary/guacamole-1.1.0.war
       - guacamole_client_download_directory: /vidconf/guacamole
       - vnc_configuration_directory: /vidconf/vnc
+      - network_interface_to_display: eth0
 
     handlers:
       - name: restart tomcat8
@@ -100,6 +101,26 @@
           section: daemon
           option: AutomaticLoginEnable
           value: true
+        become: yes
+      # Install indicator-ip (https://github.com/bovender/indicator-ip) so that
+      # we can display the IP on the desktop at all times (e.g. so you know
+      # what to connect to).
+      - name: Add indicator-ip repository, ppa:bovender/bovender.
+        apt_repository:
+          repo: ppa:bovender/bovender
+        become: yes
+      - name: Install indicator-ip.
+        apt:
+          pkg:
+            - indicator-ip
+          update_cache: yes
+        become: yes
+      - name: Tweak indicator-ip startup command line options.
+        ini_file:
+          path: /etc/xdg/autostart/indicator-ip.desktop
+          section: Desktop Entry
+          option: Exec
+          value: "indicator-ip -i {{network_interface_to_display}}"
         become: yes
       # Install ufw so that we can easily configure the firewall.
       - name: Install ufw.
