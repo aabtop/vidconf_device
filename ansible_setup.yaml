@@ -30,6 +30,10 @@
         become: yes
 
     tasks:
+      - fail:
+          msg: You must call Ansible with '-e guac_login_password=PASSWORD'
+        when: guac_login_password is not defined
+
       # These tasks are moved to the top because they tend to fail frequently.
       - name: Ensure Guacamole download directory exists.
         file:
@@ -178,8 +182,8 @@
         notify: "restart guacamole"
         become: yes
       - name: Setup /etc/guacamole/user-mapping.xml.
-        copy:
-          src: user-mapping.xml
+        template:
+          src: user-mapping.xml.j2
           dest: /etc/guacamole/user-mapping.xml
         notify: "restart guacamole"
         become: yes

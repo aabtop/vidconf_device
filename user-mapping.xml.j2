@@ -28,14 +28,14 @@
     </authorize>
     -->
 
-    <authorize username="user" password="pass">
+    <authorize username="vnc" password="{{guac_login_password}}">
         <protocol>vnc</protocol>
         <param name="hostname">localhost</param>
         <param name="password">password</param>
         <param name="port">5900</param>
     </authorize>
 
-    <authorize username="userrdp" password="pass">
+    <authorize username="rdp" password="{{guac_login_password}}">
         <protocol>rdp</protocol>
         <param name="hostname">localhost</param>
         <param name="domain">Xvnc</param>
