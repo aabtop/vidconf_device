@@ -34,7 +34,9 @@ the file `/etc/ansible/hosts` (with sudo) and adding to the end of it:
 ```
 
 You must supply the device IP (`<IP_OF_YOUR_DEVICE>`) and the user that you wish
-to run the setup scripts as (`<USER_TO_RUN_AS>`).
+to run the setup scripts as (`<USER_TO_RUN_AS>`).  Note that the Ansible script
+will setup automatic login to use `<USER_TO_RUN_AS>` as the user that is 
+automatically logged in.
 
 ```bash
 ansible-playbook -K ansible_setup.yaml -e guac_login_password=<PASSWORD>

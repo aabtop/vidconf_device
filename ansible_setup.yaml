@@ -2,7 +2,7 @@
   # This will setup a device for video conferencing.
   
   - hosts: all
-    gather_facts: False
+    gather_facts: True
     vars:
       - guacamole_download_url: http://archive.apache.org/dist/guacamole/1.1.0/binary/guacamole-1.1.0.war
       - guacamole_client_download_directory: /vidconf/guacamole
@@ -86,6 +86,21 @@
           gsettings set org.gnome.settings-daemon.plugins.cursor active false
         register: disable_mouse_hide
         changed_when: "'true' in disable_mouse_hide.stdout"
+      # Setup auto-login.
+      - name: Set auto-login user to "{{ansible_user_id}}".
+        ini_file:
+          path: /etc/gdm3/custom.conf
+          section: daemon
+          option: AutomaticLogin
+          value: "{{ansible_user_id}}"
+        become: yes
+      - name: Enable auto-login.
+        ini_file:
+          path: /etc/gdm3/custom.conf
+          section: daemon
+          option: AutomaticLoginEnable
+          value: true
+        become: yes
       # Install ufw so that we can easily configure the firewall.
       - name: Install ufw.
         apt:
