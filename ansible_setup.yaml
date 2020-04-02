@@ -80,6 +80,12 @@
           gsettings set org.gnome.desktop.screensaver lock-enabled false
         register: disable_screen_lock
         changed_when: "'uint32 0' not in disable_screen_lock.stdout or 'false' not in disable_screen_lock.stdout"
+      - name: Set mouse to not disappear after a period of inactivity.
+        shell:
+          echo `gsettings get org.gnome.settings-daemon.plugins.cursor active`
+          gsettings set org.gnome.settings-daemon.plugins.cursor active false
+        register: disable_mouse_hide
+        changed_when: "'true' in disable_mouse_hide.stdout"
       # Install ufw so that we can easily configure the firewall.
       - name: Install ufw.
         apt:
@@ -161,7 +167,6 @@
           dest: /var/lib/tomcat8/webapps/guacamole.war
         notify: "restart guacamole"
         become: yes
-      
       - name: Ensure Tomcat Guacamole configuration directory exists.
         file:
           state: directory
