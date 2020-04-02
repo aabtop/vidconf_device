@@ -255,9 +255,19 @@
           port: 443
           proto: tcp
         become: yes
+      - name: Allow nginx HTTP port in ufw (used to port forward to HTTPS).
+        ufw:
+          rule: allow
+          port: 80
+          proto: tcp
+        become: yes
 
       # Setup some scripts to update the desktop wallpaper with an image
       # that indicates the device's IP address, as well as login instructions.
+      - name: Install Chromium.
+        apt:
+          pkg:
+            - chromium-browser
       - name: Create wallpaper update wrapper script.
         template:
           src: update_vidconf_wallpaper_wrapper.jinja2.sh
