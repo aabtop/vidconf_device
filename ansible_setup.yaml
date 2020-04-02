@@ -7,7 +7,6 @@
       - guacamole_download_url: http://archive.apache.org/dist/guacamole/1.1.0/binary/guacamole-1.1.0.war
       - guacamole_client_download_directory: /vidconf/guacamole
       - vnc_configuration_directory: /vidconf/vnc
-      - desktop_user: nano
 
     handlers:
       - name: restart tomcat8
