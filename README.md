@@ -55,3 +55,13 @@ in to your device by navigating any browser to `https://<IP_OF_YOUR_DEVICE>`.
 Note again that as mentioned above, the certificate is self-signed, and so
 you will need to bypass a security warning in your browser on your first
 visit.
+
+When the page loads, you will be presented with a login screen.  For user you
+can enter either `vnc` or `rdp`, to access either the VNC server that is running
+(which is [x11vnc](http://www.karlrunge.com/x11vnc/)), or the RDP server that
+is running (which is [xrdp](http://xrdp.org/)).
+
+The password will be the `<PASSWORD>` value you supplied above on the
+command line invokation of `ansible-playbook`.
+
+The credentials are defined by the file [user-mapping.xml](user-mapping.xml).

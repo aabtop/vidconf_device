@@ -182,7 +182,7 @@
         become: yes
       - name: Setup /etc/guacamole/user-mapping.xml.
         template:
-          src: user-mapping.xml.j2
+          src: user-mapping.xml
           dest: /etc/guacamole/user-mapping.xml
         notify: "restart guacamole"
         become: yes
