@@ -48,7 +48,7 @@ access the website.
 Note that NGINX will be installed as a reverse proxy to the Apache Tomcat based
 Guacamole web app.  It is configured to run through TLS using a self-signed
 certificate.  The assumption here is that the device will only ever be
-running in an internal network.
+running on an internal network.  Note that [ufw](https://wiki.ubuntu.com/UncomplicatedFirewall) is used to setup a firewall where only ports 443 (for HTTPS) and 22 (SSH) are open.
 
 You can reboot the device as you wish, all required services will be restarted
 on bootup.

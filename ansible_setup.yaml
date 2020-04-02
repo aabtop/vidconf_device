@@ -4,9 +4,10 @@
   - hosts: all
     gather_facts: True
     vars:
+      - vidconf_directory: /vidconf
       - guacamole_download_url: http://archive.apache.org/dist/guacamole/1.1.0/binary/guacamole-1.1.0.war
-      - guacamole_client_download_directory: /vidconf/guacamole
-      - vnc_configuration_directory: /vidconf/vnc
+      - guacamole_client_download_directory: "{{vidconf_directory}}/guacamole"
+      - vnc_configuration_directory: "{{vidconf_directory}}/vnc"
       - network_interface_to_display: eth0
 
     handlers:
@@ -28,12 +29,22 @@
           state: restarted
           enabled: yes
         become: yes
+      - name: update wallpaper
+        shell: ./update_vidconf_wallpaper_wrapper.sh
+        args:
+          chdir: "{{vidconf_directory}}"
 
     tasks:
       - fail:
           msg: You must call Ansible with '-e guac_login_password=PASSWORD'
         when: guac_login_password is not defined
-
+      - name: "Ensure {{vidconf_directory}} directory exists."
+        file:
+          state: directory
+          path: "{{vidconf_directory}}"
+          owner: "{{ansible_user_id}}"
+          group: "{{ansible_user_id}}"
+        become: yes
       # These tasks are moved to the top because they tend to fail frequently.
       - name: Ensure Guacamole download directory exists.
         file:
@@ -101,26 +112,6 @@
           section: daemon
           option: AutomaticLoginEnable
           value: true
-        become: yes
-      # Install indicator-ip (https://github.com/bovender/indicator-ip) so that
-      # we can display the IP on the desktop at all times (e.g. so you know
-      # what to connect to).
-      - name: Add indicator-ip repository, ppa:bovender/bovender.
-        apt_repository:
-          repo: ppa:bovender/bovender
-        become: yes
-      - name: Install indicator-ip.
-        apt:
-          pkg:
-            - indicator-ip
-          update_cache: yes
-        become: yes
-      - name: Tweak indicator-ip startup command line options.
-        ini_file:
-          path: /etc/xdg/autostart/indicator-ip.desktop
-          section: Desktop Entry
-          option: Exec
-          value: "indicator-ip -i {{network_interface_to_display}}"
         become: yes
       # Install ufw so that we can easily configure the firewall.
       - name: Install ufw.
@@ -256,10 +247,35 @@
         become: yes
         notify: "restart nginx"
 
-      # Open up the web port to enable access to the system.
+      # Open up the web port to enable access to the system, which essentially
+      # activates the entire service.
       - name: Allow nginx HTTPs port in ufw.
         ufw:
           rule: allow
           port: 443
           proto: tcp
         become: yes
+
+      # Setup some scripts to update the desktop wallpaper with an image
+      # that indicates the device's IP address, as well as login instructions.
+      - name: Create wallpaper update wrapper script.
+        template:
+          src: update_vidconf_wallpaper_wrapper.jinja2.sh
+          dest: "{{vidconf_directory}}/update_vidconf_wallpaper_wrapper.sh"
+          mode: 0755
+        notify: "update wallpaper"
+      - name: Copy wallpaper update script.
+        template:
+          src: update_vidconf_wallpaper.py
+          dest: "{{vidconf_directory}}/update_vidconf_wallpaper.py"
+        notify: "update wallpaper"
+      - name: Copy HTML template file.
+        copy:
+          src: vidconf_wallpaper.template.html
+          dest: "{{vidconf_directory}}/vidconf_wallpaper.template.html"
+        notify: "update wallpaper"
+      - name: Setup cron job to update wallpaper every hour.
+        cron:
+          name: update wallpaper
+          special_time: hourly
+          job: "{{vidconf_directory}}/update_vidconf_wallpaper_wrapper.sh"

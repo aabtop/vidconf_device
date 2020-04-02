@@ -1,0 +1,71 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <style>
+    body {{
+      background: linear-gradient(to bottom, rgb(34,152,191), rgb(132,178,162) 90%) no-repeat;
+      height: 100%;
+      margin: 0;
+
+      font-family: Arial;
+      font-size: 30px;
+
+      display: flex;
+      flex-direction: column-reverse;
+    }}
+    html {{
+      height: 100%;
+    }}
+
+    .sub-blocks {{
+      margin: 3% 10%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }}
+    .sub-block {{
+      padding: 30px;
+      background-color: rgb(208,146,146);
+      border: 3px solid black;
+      border-radius: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: black 0px 0 20px;
+      text-shadow: black 0px 0 2px;
+      text-align: center;
+    }}
+    .sub-block > div:first-child {{
+      padding: 15px 0px;
+      font-size: 1.2em;
+    }}
+  </style>
+</head>
+
+<body>
+  <div class="sub-blocks">
+    <div class="sub-block">
+      <div>Step 1: Connect to URL</div>
+      <div class="item-list">
+        {address_items}
+      </div>
+    </div>
+    <div class="sub-block">
+      <div>Step 2: Login</div>
+      <div class="item-list">
+        <div>Username: vnc</div>
+        <div>Password: {login_password}</div>
+      </div>
+    </div>
+    <div class="sub-block">
+      <div>Step 3: Profit</div>
+      <div style="width: 300px;">(Or launch Chromium and navigate to a video chat URL.)</div>
+    </div>
+  </div>
+</body>
+</html>
