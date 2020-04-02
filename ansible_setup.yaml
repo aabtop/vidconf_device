@@ -153,6 +153,7 @@
         copy:
           src: vnc_passwd
           dest: "{{vnc_configuration_directory}}/passwd"
+        register: install_vnc_passwd
         become: yes
       - name: Install VNC service file so it can start on boot.
         copy:
@@ -163,10 +164,10 @@
       - name: "Enable x11vnc.service to launch x11vnc on startup."
         service:
           name: x11vnc
-          state: started
+          state: restarted
           daemon_reload: yes
           enabled: yes
-        when: install_vnc_service.changed
+        when: install_vnc_service.changed or install_vnc_passwd.changed
         become: yes
       # Setup an RDP server
       # (not strictly necessary, but it offers an extra option to VNC).
