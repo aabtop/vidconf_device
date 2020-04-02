@@ -48,6 +48,9 @@ Guacamole web app.  It is configured to run through TLS using a self-signed
 certificate.  The assumption here is that the device will only ever be
 running in an internal network.
 
+You can reboot the device as you wish, all required services will be restarted
+on bootup.
+
 ## Accessing the remote desktop
 
 Once the script has executed successfully, you should be able to remote desktop
