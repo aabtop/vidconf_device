@@ -1,9 +1,10 @@
 # Vidconf Setup
 
-This repository hosts an Ansible script designed to configure an Ubuntu-like
-Linux distro (e.g. I've tested this on Linux 4 Tegra) such that it hosts
-an instance of Apache Guacamole, enabling full remote desktop access via
-VNC (or RDP).
+This repository hosts an Ansible script designed to configure an Ubuntu
+Linux distro (tested so far with Ubuntu 18.04) such that it will host
+an instance of Apache Guacamole, enabling easy remote desktop access via
+VNC (or RDP) to anyone in a household, even if they are not technically
+inclined.
 
 The ultimate goal of this configuration is to allow for a nice living room
 video conferencing/chatting setup where a small device like a Jetson Nano or
@@ -14,6 +15,10 @@ the video conference URL.  Then you can turn off the remote desktop and sit
 back in your couch and chat.
 
 ## Install
+
+Prepare the device by flashing it with Ubuntu (version 18.04 is verified to
+work) and ensuring that a [Gnome desktop environment](https://www.gnome.org/) is
+available and that it has a SSH server running and accessible.
 
 To execute the script, first make sure that Ansible is installed on the host
 machine:
@@ -28,7 +33,7 @@ running and reachable.
 Once it is installed, add your device to the list of Ansible hosts by opening
 the file `/etc/ansible/hosts` (with sudo) and adding to the end of it:
 
-```
+```ini
 [vidconf_device]
 <IP_OF_YOUR_DEVICE> ansible_user=<USER_TO_RUN_AS>
 ```
@@ -45,13 +50,23 @@ ansible-playbook -K ansible_setup.yaml -e guac_login_password=<PASSWORD>
 where `<PASSWORD>` is the password that will be presented to users when they
 access the website.
 
-Note that NGINX will be installed as a reverse proxy to the Apache Tomcat based
-Guacamole web app.  It is configured to run through TLS using a self-signed
-certificate.  The assumption here is that the device will only ever be
-running on an internal network.  Note that [ufw](https://wiki.ubuntu.com/UncomplicatedFirewall) is used to setup a firewall where only ports 443 (for HTTPS) and 22 (SSH) are open.
-
 You can reboot the device as you wish, all required services will be restarted
 on bootup.
+
+## Security
+
+### TLS Setup
+Note that NGINX will be installed as a reverse proxy to the Apache Tomcat based
+Guacamole web app.  It is configured to run through TLS using a self-signed
+certificate.
+
+The big assumption here is that the device will only ever be running on an
+internal home network, and so domain names will not be available.
+
+### Firewall Setup
+[ufw](https://wiki.ubuntu.com/UncomplicatedFirewall) is used to setup a firewall
+where only ports 443 (for HTTPS), 80 (for HTTP redirect to HTTPS), and 22 (SSH)
+are open.
 
 ## Accessing the remote desktop
 
