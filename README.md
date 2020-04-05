@@ -14,6 +14,9 @@ remote desktop in to the video conference device, open a browser, and enter
 the video conference URL.  Then you can turn off the remote desktop and sit
 back in your couch and chat.
 
+The main entry point of the configuration described in this repository is
+the [ansible_setup.yaml](ansible_setup.yaml) Ansible setup file.
+
 ## Install
 
 Prepare the device by flashing it with Ubuntu (version 18.04 is verified to
@@ -67,6 +70,14 @@ internal home network, and so domain names will not be available.
 [ufw](https://wiki.ubuntu.com/UncomplicatedFirewall) is used to setup a firewall
 where only ports 443 (for HTTPS), 80 (for HTTP redirect to HTTPS), and 22 (SSH)
 are open.
+
+### Passwords
+
+The Linux user password will never be needed by users of the system
+(e.g. guests in your home), only the `<PASSWORD>` specified during install time
+above.  Therefore, you may keep the Linux user (and sudo) password secret from
+guests.  The login `<PASSWORD>` will be displayed on the display's wallpaper
+background, so anyone that can see the display will have login access.
 
 ## Accessing the remote desktop
 
