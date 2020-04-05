@@ -175,6 +175,7 @@
         apt:
           pkg:
             - xrdp
+        become: yes
       - name: Configure Xrdp.
         copy:
           src: xrdp.ini
@@ -229,6 +230,7 @@
         apt:
           pkg:
             - nginx
+        become: yes
       - name: Disable default NGINX site.
         file:
           state: absent
@@ -269,6 +271,7 @@
         apt:
           pkg:
             - chromium-browser
+        become: yes
       - name: Create wallpaper update wrapper script.
         template:
           src: update_vidconf_wallpaper_wrapper.jinja2.sh
